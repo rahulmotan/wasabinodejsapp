@@ -12,20 +12,27 @@ var app = express();
 
 const ep = new AWS.Endpoint('s3.wasabisys.com');
 const s3 = new AWS.S3({endpoint: ep});
+var uuid = require('uuid');
 
-const expTime = 60;
-const keyName = 'sample';
-const bucketName = 'policytest-presigned';
-const params = {
-    Bucket: bucketName, Key: keyName, Expires: expTime,
-    Body:'This is a sample text object',
-};
+var bucketName = 'node-sdk-example-' + uuid.v4();
+var keyName = 'hello-world-from-nodejs.txt';
 
-const url = s3.getSignedUrl('putObject', params);
+var bucketPromise = s3.createBucket({Bucket: bucketName}).promise();
 
-console.log(url);
-
-
+bucketPromise.then(
+    function (data) {
+        // Create params for putObject call
+        var objectParams = {Bucket: bucketName, Key: keyName, Body: 'Hello World From Node JS!'};
+        // Create object upload promise
+        var uploadPromise = s3.putObject(objectParams).promise();
+        uploadPromise.then(
+            function (data) {
+                console.log("Successfully uploaded data to " + bucketName + "/" + keyName);
+            });
+    }).catch(
+    function (err) {
+        console.error(err, err.stack);
+    });
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
